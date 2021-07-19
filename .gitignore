@@ -1,0 +1,23 @@
+# dependencies
+node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# misc
+.vscode
+.DS_Store
+.env*
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+server/uploads/*
+server/.prettierignore
+server/.prettierrc
+server/firebase-adminsdk.json
+server/chatbotkey.json
+
+nginx/logs/*
