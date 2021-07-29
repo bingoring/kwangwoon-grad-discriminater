@@ -2,19 +2,41 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 
-exports.login = async (req, res) => {
+exports.test = async (req, res) => {
     console.log("here");
 
+    function getGradeData(html) {
+        // cheerio 라이브러리를 사용하여 html을 DOM 으로 파싱합니다.
+        const $ = cheerio.load(html);
+
+        var rate_text;
+        try{
+            $('#hakbu > table:nth-child(3) > tbody > tr:nth-child(12) > td').each(function(index,elem){
+              rate_text = $(this).text(); //해당 태그의 text부분만 잘라오기
+              console.log(rate_text);
+            });
+            //console.log('Size=' +size);
+            //console.log('Average Correct Percentage=' +(sum/size).toFixed(3)+'%');
+        }
+        catch(error){
+            console.error(error);
+        }
+         // end for
+
+        return rate_text;
+    } // end extractNewsDate()
+
+    //        slowMo: 500, // 디버깅용으로 퍼핏티어 작업을 지정된 시간(ms)만큼 늦춥니다.
     // 브라우저 옵션 설정
     const browserOption = {
-        slowMo: 600, // 디버깅용으로 퍼핏티어 작업을 지정된 시간(ms)만큼 늦춥니다.
+        slowMo: 300,
         headless: true, // 디버깅용으로 false 지정하면 브라우저가 자동으로 열린다.
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     };
     const browser = await puppeteer.launch(browserOption);
     const page = await browser.newPage();
-    const klas_id = req.body.user_id;   //학번
-    const klas_pw = req.body.user_pw;   //pw
+    const klas_id = '2016726095';   //학번
+    const klas_pw = 'ritch8288!';   //pw
     // 탭 옵션
     const pageOption = {
         // waitUntil: 적어도 500ms 동안 두 개 이상의 네트워크 연결이 없으면 탐색이 완료된 것으로 간주합니다.
@@ -105,7 +127,6 @@ exports.login = async (req, res) => {
             totalGrade: totalGrade,
             semesterGrade: semesterGrade
         });
-
     }catch (error) {
         console.error(error);
         return;
@@ -117,5 +138,4 @@ exports.login = async (req, res) => {
         // 8. 브라우저 닫기
         await browser.close();
     }
-    
 };

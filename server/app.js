@@ -14,10 +14,11 @@ require("dotenv").config();
 
 const app = express();
 const indexRouter = require("./src/routes/index/index");
-
+const testRouter = require("./src/routes/test/test");
+const authRouter = require("./src/routes/auth/auth");
 // view engine setup
-//app.set("views", path.join(__dirname, "src/views"));
-//app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "src/views"));
+app.set("view engine", "ejs");
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -28,6 +29,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 app.use("/", indexRouter);
+app.use("/test", testRouter);
+app.use("/auth", authRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node ./bin/www.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "nodemon --watch bin/ bin/www.js"
+    "start:dev": "nodemon --watch bin/ bin/www.js",
+    "heroku-postbuild": "npx webpack"
   },
   "author": "",
   "license": "ISC",
