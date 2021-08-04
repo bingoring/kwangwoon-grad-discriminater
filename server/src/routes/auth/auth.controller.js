@@ -3,16 +3,17 @@ const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 
 exports.login = async (req, res) => {
-    console.log("here");
+    console.log("login request recieved");
 
     // 브라우저 옵션 설정
     const browserOption = {
-        slowMo: 600, // 디버깅용으로 퍼핏티어 작업을 지정된 시간(ms)만큼 늦춥니다.
-        headless: true, // 디버깅용으로 false 지정하면 브라우저가 자동으로 열린다.
+        slowMo: 300, // 디버깅용으로 퍼핏티어 작업을 지정된 시간(ms)만큼 늦춥니다.
+        headless: false, // 디버깅용으로 false 지정하면 브라우저가 자동으로 열린다.
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     };
     const browser = await puppeteer.launch(browserOption);
     const page = await browser.newPage();
+
     const klas_id = req.body.user_id;   //학번
     const klas_pw = req.body.user_pw;   //pw
     // 탭 옵션
@@ -28,7 +29,7 @@ exports.login = async (req, res) => {
             'https://klas.kw.ac.kr/usr/cmn/login/LoginForm.do'; 
 
         // 1. 클라스 페이지 접속
-        await page.goto(url,pageOption);
+        await page.goto(url);
     } catch (error) {
         await page.close();
         await browser.close();
@@ -37,9 +38,12 @@ exports.login = async (req, res) => {
         return;
     }
 
-    console.log("goto page");
+    console.log("goto klas page");
 
     try {
+        //로그인 버튼 셀렉터 로드 대기
+        const buttonSelector = 'body > div.container > div > div > div.panel-body-inner > form > div.adminLogin-box > button';
+        await page.waitForSelector(buttonSelector, { timeout: 1000 });
         // 2. 아이디와 패스워드 입력
         await page.evaluate((id, pw) => {
             document.querySelector("#loginId").value = id;
@@ -76,7 +80,7 @@ exports.login = async (req, res) => {
         return;
     }
     console.log("login success");
-    let response;
+    
     try {
         // 리다이렉트 되는 페이지의 주소를 사용.
         const url =
@@ -84,30 +88,28 @@ exports.login = async (req, res) => {
 
         // 4. 클라스 성적조회 페이지 접근.
         await page.goto(url, pageOption);
+        const content = await page.content();
 
-        // 5. 이수 성적 가져오기
-        const totalGrade = await page.evaluate(() => document.querySelector('#hakbu > table:nth-child(3) > tbody > tr:nth-child(12) > td').textContent);
+        //cheerio로 해당 페이지 콘텐트만 받아옴
+        const $ = cheerio.load(content);
         
-        // 6. 수강한 과목 가져오기
-        //#hakbu > table:nth-child(1)
-        //#hakbu > table:nth-child(13)  3학년2학기
-        //#hakbu > table:nth-child(14)  4학년1학기
-        //          ...
-        //#hakbu > table:nth-child(21)
-        //const semesterGrade = await (await (await page.$('#hakbu > table:nth-child(13)')).getProperty('textContent')).jsonValue();
-        //3학년 2학기 성적 조회
-        const semesterGrade = await page.evaluate(() => document.querySelector('#hakbu > table:nth-child(14)').textContent);
-        //student_id = await page.evaluate(element1 => element1.value, element1);
-        console.log(totalGrade);
-        console.log(semesterGrade);
+        let name, grade;
+        const gradeTable = $("#hakbu > table > tbody > tr");
+        gradeTable.each((index, list) => {
+            name = $(list).find("td:nth-child(2)").text();
+            grade = $(list).find("td:nth-child(6)").text();
 
-        res.send({
-            totalGrade: totalGrade,
-            semesterGrade: semesterGrade
+            console.log({
+                index, name, grade
+            })
         });
 
+        res.send({
+            index, name, grade
+        });
     }catch (error) {
         console.error(error);
+        console.error("here");
         return;
     } finally {
         // catch 구문에 return 이 존재해도 finally 구문은 실행 합니다.
@@ -117,5 +119,9 @@ exports.login = async (req, res) => {
         // 8. 브라우저 닫기
         await browser.close();
     }
-    
 };
+const sleep = (ms) => {
+    return new Promise(resolve=>{
+        setTimeout(resolve,ms)
+    })
+}
